@@ -53,27 +53,19 @@ public class CadastroCidadeService {
 		 */
 
 	}
-    @Transactional
+
+	@Transactional
 	public Cidade atualizar(Long id, Cidade cidade) {
-		Cidade cidadeAtual = buscarCidadeId(id);
+		existsCidadeAndEstado(id, cidade.getNome());
 
-		if (cidadeAtual != null) {
+		return salvar(cidade);
 
-			BeanUtils.copyProperties(cidade, cidadeAtual, "id");
-			return salvar(cidadeAtual);
-		}
-		throw new CidadeNaoEncontradaException(id);
-
-	}
-
-	private Cidade buscarCidadeId(Long id) {
-		Cidade cidadeAtual = cidadeRepository.findById(id).orElse(null);
-		return cidadeAtual;
 	}
 
 	@Transactional
 	public void excluir(Long cidadeId) {
 		try {
+			System.out.println(cidadeId);
 			cidadeRepository.deleteById(cidadeId);
 
 		} catch (EmptyResultDataAccessException e) {

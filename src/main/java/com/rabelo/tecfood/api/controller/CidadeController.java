@@ -1,6 +1,5 @@
 package com.rabelo.tecfood.api.controller;
 
-import java.time.LocalDateTime;
 import java.util.List;
 
 import javax.validation.Valid;
@@ -8,9 +7,7 @@ import javax.validation.Valid;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -20,34 +17,33 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.rabelo.tecfood.api.exceptionhandler.Problem;
 import com.rabelo.tecfood.domain.model.Cidade;
+import com.rabelo.tecfood.domain.model.map.CidadeModelMapper;
+import com.rabelo.tecfood.domain.model.request.CidadeRequest;
+import com.rabelo.tecfood.domain.model.response.CidadeResponse;
 import com.rabelo.tecfood.domain.repository.CidadeRepository;
 import com.rabelo.tecfood.domain.service.CadastroCidadeService;
-import com.rabelo.tecfood.domain.service.exception.CidadeNaoEncontradaException;
-import com.rabelo.tecfood.domain.service.exception.EntidadeNaoEncontradaException;
-import com.rabelo.tecfood.domain.service.exception.EstadoNaoEncontradoException;
-import com.rabelo.tecfood.domain.service.exception.NegocioException;
+
+import lombok.AllArgsConstructor;
 
 @RestController
 @RequestMapping("/cidades")
+@AllArgsConstructor
 public class CidadeController {
 
-	@Autowired
 	private CidadeRepository cidadeRepository;
-
-	@Autowired
 	private CadastroCidadeService cadastroCidadeService;
+	private CidadeModelMapper cidadeModel;
 
 	@GetMapping
-	public List<Cidade> listar() {
-		return cidadeRepository.findAll();
+	public List<CidadeResponse> listar() {
+		return cidadeModel.collectionToCidadeResponse(cidadeRepository.findAll());
 	}
 
 	@GetMapping("/{id}")
-	public Cidade buscarCidade(@PathVariable Long id) {
+	public CidadeResponse buscarCidade(@PathVariable Long id) {
 		
-		return cadastroCidadeService.buscarOuFalhar(id);
+		return cidadeModel.cidadeToCidadeResponse(cadastroCidadeService.buscarOuFalhar(id));
 		/*
 		 * Cidade cidadeAtual = cidadeRepository.findById(id).orElse(null); return
 		 * cidadeAtual != null ? ResponseEntity.ok(cidadeAtual) :
@@ -57,8 +53,9 @@ public class CidadeController {
 
 	@PostMapping
 	@ResponseStatus(HttpStatus.CREATED)
-	public Cidade salvar(@RequestBody @Valid Cidade cidade) {
-		return cadastroCidadeService.salvar(cidade);
+	public CidadeResponse salvar(@RequestBody @Valid CidadeRequest cidadeRequest) {
+		 Cidade cidade = cidadeModel.cidadeRequestToCidade(cidadeRequest);
+		return cidadeModel.cidadeToCidadeResponse(cadastroCidadeService.salvar(cidade));
 
 		/*
 		 * try { Cidade cidadeAtual = cadastroCidadeService.salvar(cidade); return
@@ -69,25 +66,15 @@ public class CidadeController {
 		 */	}
 
 	@PutMapping("/{id}")
-	public Cidade atualizar(@PathVariable Long id, @RequestBody @Valid Cidade cidade) {
+	public CidadeResponse atualizar(@PathVariable Long id, @RequestBody @Valid CidadeRequest cidadeRequest) {
 		
-		Cidade cidadeAtual = cadastroCidadeService.buscarOuFalhar(id);
+		Cidade cidade = cadastroCidadeService.buscarOuFalhar(id);
+		cidadeModel.copyToDomainObject(cidadeRequest, cidade);	
 		
-		BeanUtils.copyProperties(cidade, cidadeAtual, "id");
+		return cidadeModel.cidadeToCidadeResponse(cadastroCidadeService.atualizar(id, cidade));
 		
-		return cadastroCidadeService.salvar(cidadeAtual);
-		
-		
-		/*
-		 * try { Cidade cidadeAtual = cadastroCidadeService.atualizar(id, cidade);
-		 * 
-		 * return ResponseEntity.ok(cidadeAtual);
-		 * 
-		 * } catch (EntidadeNaoEncontradaException e) {
-		 * 
-		 * return ResponseEntity.notFound().build(); }
-		 */	}
-
+	}
+	
 	@DeleteMapping("/{id}")
 	@ResponseStatus(HttpStatus.NO_CONTENT)
 	public void remover(@PathVariable Long id) {
