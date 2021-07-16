@@ -23,21 +23,26 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.rabelo.tecfood.domain.model.Cozinha;
+import com.rabelo.tecfood.domain.model.map.CozinhaModelMapper;
+import com.rabelo.tecfood.domain.model.request.CozinhaRequest;
+import com.rabelo.tecfood.domain.model.response.CozinhaResponse;
 import com.rabelo.tecfood.domain.repository.CozinhaRepository;
 import com.rabelo.tecfood.domain.service.CadastroCozinhaService;
 import com.rabelo.tecfood.domain.service.exception.EntidadeJaCadastradaException;
 import com.rabelo.tecfood.domain.service.exception.EntidadeNaoEncontradaException;
 
+import lombok.AllArgsConstructor;
+
 @RestController
 @RequestMapping(value = "/cozinhas")
 //,produces = { MediaType.APPLICATION_XML_VALUE, MediaType.APPLICATION_JSON_VALUE })
+@AllArgsConstructor
 public class CozinhaController {
 
-	@Autowired
-	private CozinhaRepository cozinhaRepository;
-
-	@Autowired
+	
+	private CozinhaRepository cozinhaRepository;	
 	private CadastroCozinhaService cadastrocozinhaService;
+	private CozinhaModelMapper cozinhaModel; 
 
 	@GetMapping()
 	public List<Cozinha> listar() {
@@ -45,9 +50,9 @@ public class CozinhaController {
 	}
 
 	@GetMapping("/{id}")
-	public Cozinha buscarCozinha(@PathVariable Long id) {
+	public CozinhaResponse buscarCozinha(@PathVariable Long id) {
 		
-		return cadastrocozinhaService.buscarOuFalhar(id);
+		return cozinhaModel.cozinhaToCozinhaResponse(cadastrocozinhaService.buscarOuFalhar(id));
 		
 		/*
 		 * Cozinha cozinha = cozinhaRepository.findById(id).orElse(null);
@@ -61,8 +66,9 @@ public class CozinhaController {
 
 	@PostMapping
 	@ResponseStatus(HttpStatus.CREATED)
-	public Cozinha salvar(@RequestBody @Valid Cozinha cozinha) {
-		return cadastrocozinhaService.salva(cozinha);
+	public CozinhaResponse salvar(@RequestBody @Valid CozinhaRequest cozinhaRequest) {
+		Cozinha cozinha = cozinhaModel.cozinhaResquestToCozinha(cozinhaRequest);
+		return cozinhaModel.cozinhaToCozinhaResponse(cadastrocozinhaService.salva(cozinha));
 
 		/*
 		 * try { Cozinha cozinhasalva = cadastrocozinhaService.salva(cozinha);
@@ -75,12 +81,13 @@ public class CozinhaController {
 		 */	}
 
 	@PutMapping("/{id}")
-	public Cozinha atualizar(@PathVariable Long id, @RequestBody Cozinha cozinha) {		
+	public CozinhaResponse atualizar(@PathVariable Long id, @RequestBody CozinhaRequest cozinhaRequest) {		
 		
-		Cozinha cozinhaAtual = cadastrocozinhaService.buscarOuFalhar(id);
+		Cozinha cozinhaDb = cadastrocozinhaService.buscarOuFalhar(id);
+		cozinhaModel.copyToDomainObject(cozinhaRequest, cozinhaDb);
+		//BeanUtils.copyProperties(cozinha, cozinhaAtual, "id");
 		
-		BeanUtils.copyProperties(cozinha, cozinhaAtual, "id");
-		return cozinhaRepository.save(cozinhaAtual);
+		return cozinhaModel.cozinhaToCozinhaResponse(cozinhaRepository.save(cozinhaDb));
 
 		/*
 		 * Optional<Cozinha> cozinhaAtual = cozinhaRepository.findById(id);

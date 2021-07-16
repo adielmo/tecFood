@@ -13,20 +13,22 @@ import lombok.Getter;
 @Builder
 @JsonInclude(Include.NON_NULL)
 public class Problem {
+	
+
 	private Integer status;
+	private OffsetDateTime timestamp;
 	private String type;
 	private String title;
 	private String detail;
-	
-	private String userMassage;
-	private OffsetDateTime timestamp;
+	private String userMessage;
 	private List<Object> objects;
-	
-	@Builder
+
 	@Getter
-	static class Object{
+	@Builder
+	public static class Object {
+
 		private String name;
 		private String userMessage;
+
 	}
-	
-	}
+}

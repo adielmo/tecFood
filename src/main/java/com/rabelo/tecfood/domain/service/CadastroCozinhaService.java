@@ -14,6 +14,7 @@ import com.rabelo.tecfood.domain.service.exception.CozinhaNaoEncontradaException
 import com.rabelo.tecfood.domain.service.exception.EntidadeEmUsoException;
 import com.rabelo.tecfood.domain.service.exception.EntidadeJaCadastradaException;
 import com.rabelo.tecfood.domain.service.exception.EntidadeNaoEncontradaException;
+import com.rabelo.tecfood.domain.service.exception.EstadoNaoEncontradoException;
 
 @Service
 public class CadastroCozinhaService {
@@ -42,17 +43,13 @@ public class CadastroCozinhaService {
 	public void excluir(Long id) {
 
 		try {
-
 			cozinhaRepository.deleteById(id);
 
 		} catch (EmptyResultDataAccessException e) {
-
-			throw new CozinhaNaoEncontradaException(id);
+			throw new EstadoNaoEncontradoException(id);
 
 		} catch (DataIntegrityViolationException e) {
-
 			throw new EntidadeEmUsoException(String.format(MSG_COZINHA_ESTA_EM_USO, id));
-
 		}
 	}
 

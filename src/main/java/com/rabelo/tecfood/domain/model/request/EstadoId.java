@@ -5,12 +5,11 @@ import javax.validation.constraints.NotNull;
 import lombok.Getter;
 import lombok.Setter;
 
-@Getter
 @Setter
-public class EstadoRequest {
-	
+@Getter
+public class EstadoId {
 	
 	@NotNull
-	private String nome;
+	private Long id;
 
 }

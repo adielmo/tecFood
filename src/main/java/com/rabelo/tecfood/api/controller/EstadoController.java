@@ -21,30 +21,36 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.rabelo.tecfood.domain.model.Estado;
+import com.rabelo.tecfood.domain.model.map.EstadoModelMapper;
+import com.rabelo.tecfood.domain.model.request.EstadoRequest;
+import com.rabelo.tecfood.domain.model.response.EstadoResponse;
 import com.rabelo.tecfood.domain.repository.EstadoRepository;
 import com.rabelo.tecfood.domain.service.CadastroEstadoService;
 import com.rabelo.tecfood.domain.service.exception.EntidadeJaCadastradaException;
 import com.rabelo.tecfood.domain.service.exception.EstadoNaoEncontradoException;
 
+import lombok.AllArgsConstructor;
+
 @RestController
 @RequestMapping("/estados")
+@AllArgsConstructor
 public class EstadoController {
 
-	@Autowired
 	private EstadoRepository estadoRepository;
-
-	@Autowired
 	private CadastroEstadoService cadastroEstadoService;
+	private EstadoModelMapper estadoModelMapper; 
 
 	@GetMapping
-	public List<Estado> lista() {
-		return estadoRepository.findAll();
+	public List<EstadoResponse> lista() {
+		return estadoModelMapper
+			.collectionToEstadoResponse(estadoRepository.findAll());
 	}
 
 	@GetMapping("/{id}")
-	public Estado buscarEstado(@PathVariable Long id) {
+	public EstadoResponse buscarEstado(@PathVariable Long id) {
 
-		return cadastroEstadoService.buscarOuFalhar(id);
+	return estadoModelMapper
+		.estadoToEstadoResponse(cadastroEstadoService.buscarOuFalhar(id));
 
 		/*
 		 * Optional<Estado> estadoId = estadoRepository.findById(id);
@@ -57,9 +63,10 @@ public class EstadoController {
 
 	@PostMapping
 	@ResponseStatus(HttpStatus.CREATED)
-	public Estado salvar(@RequestBody @Valid Estado estado) {		
-	
-		return cadastroEstadoService.salvar(estado);
+	public EstadoResponse salvar(@RequestBody @Valid EstadoRequest estadoRequest) {		
+	    Estado estado = estadoModelMapper.estadoRequesToEstado(estadoRequest);
+		return estadoModelMapper
+			.estadoToEstadoResponse(cadastroEstadoService.salvar(estado));
 	
 		/*
 		 * try {
@@ -73,14 +80,14 @@ public class EstadoController {
 		 */ }
 
 	@PutMapping("/{id}")
-	public Estado atualizar(@PathVariable Long id, @RequestBody @Valid Estado estado) {
+	public Estado atualizar(@PathVariable Long id, @RequestBody @Valid EstadoRequest estadoRequest) {
 
 		Estado estadoAtual = cadastroEstadoService.buscarOuFalhar(id);
-
-		BeanUtils.copyProperties(estado, estadoAtual, "id");
-
+		//BeanUtils.copyProperties(estado, estadoAtual, "id");
 		try {
-			return cadastroEstadoService.salvar(estadoAtual);
+            estadoModelMapper.copyToDomainObject(estadoRequest, estadoAtual);
+
+			return cadastroEstadoService.atualizar(estadoAtual);
 
 		} catch (EstadoNaoEncontradoException e) {
 			throw new EstadoNaoEncontradoException(id);

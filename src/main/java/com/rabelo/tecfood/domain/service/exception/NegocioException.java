@@ -1,6 +1,6 @@
 package com.rabelo.tecfood.domain.service.exception;
 
-//@ResponseStatus(HttpStatus.BAD_REQUEST)
+
 public class NegocioException extends RuntimeException {
 
 	private static final long serialVersionUID = 1L;
